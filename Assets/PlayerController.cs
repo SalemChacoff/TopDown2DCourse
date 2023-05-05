@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using TMPro;
 
 public class PlayerController : MonoBehaviour
 {
@@ -11,6 +12,7 @@ public class PlayerController : MonoBehaviour
     Vector2 movementInput;
     SpriteRenderer spriteRenderer;
     Rigidbody2D rb;
+    public TMP_InputField chatBox;
     Animator animator;
     List<RaycastHit2D> castCollision = new List<RaycastHit2D>();
     bool canMove = true;
@@ -26,48 +28,62 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
+        if (!Input.GetKeyDown(KeyCode.Return))
+        {
+            chatBox.interactable = true;
+        }
+        else
+        {
+            chatBox.interactable = false;
+        }
     }
 
     private void FixedUpdate()
     {
-        if (canMove)
+        if (!chatBox.isFocused)
         {
-            if (movementInput != Vector2.zero)
+            if (canMove)
             {
-                bool success = TryMove(movementInput);
-
-                if (!success)
+                if (movementInput != Vector2.zero)
                 {
-                    success = TryMove(new Vector2(movementInput.x, 0));
+                    bool success = TryMove(movementInput);
+
+                    if (!success)
+                    {
+                        success = TryMove(new Vector2(movementInput.x, 0));
+                    }
+                    if (!success)
+                    {
+                        success = TryMove(new Vector2(0, movementInput.y));
+                    }
+
+                    animator.SetBool("isMoving", success);
                 }
-                if (!success)
+                else
                 {
-                    success = TryMove(new Vector2(0, movementInput.y));
+                    animator.SetBool("isMoving", false);
+                };
+
+                // Set direcction of sprite to movement direction
+                if (movementInput.x < 0)
+                {
+                    spriteRenderer.flipX = true;
                 }
-
-                animator.SetBool("isMoving", success);
-            }
-            else
-            {
-                animator.SetBool("isMoving", false);
-            };
-
-            // Set direcction of sprite to movement direction
-            if (movementInput.x < 0)
-            {
-                spriteRenderer.flipX = true;
-            }
-            else if (movementInput.x > 0)
-            {
-                spriteRenderer.flipX = false;
+                else if (movementInput.x > 0)
+                {
+                    spriteRenderer.flipX = false;
+                }
             }
         }
-
+        else
+        {
+            Debug.Log("No se puede mover mientras escribe");
+        }
     }
 
     private bool TryMove(Vector2 direction)
     {
+
         if (direction != Vector2.zero)
         {
             int count = rb.Cast(
@@ -91,8 +107,6 @@ public class PlayerController : MonoBehaviour
         {
             return false;
         }
-
-
     }
 
     void OnMove(InputValue movementValue)
